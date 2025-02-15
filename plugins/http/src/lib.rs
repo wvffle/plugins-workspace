@@ -19,12 +19,14 @@ mod scope;
 pub(crate) struct Http {
     #[cfg(feature = "cookies")]
     cookies_jar: std::sync::Arc<reqwest::cookie::Jar>,
+    reqwest_client_hook: Option<fn(reqwest::ClientBuilder) -> crate::Result<reqwest::ClientBuilder>>,
 }
 
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
+pub fn init<R: Runtime>(reqwest_client_hook: Option<fn(reqwest::ClientBuilder) -> crate::Result<reqwest::ClientBuilder>>) -> TauriPlugin<R> {
     Builder::<R>::new("http")
-        .setup(|app, _| {
+        .setup(move |app, _| {
             let state = Http {
+                reqwest_client_hook,
                 #[cfg(feature = "cookies")]
                 cookies_jar: std::sync::Arc::new(reqwest::cookie::Jar::default()),
             };

@@ -228,7 +228,10 @@ pub async fn fetch<R: Runtime>(
             )
             .is_allowed(&url)
             {
-                let mut builder = reqwest::ClientBuilder::new();
+                let mut builder = match state.reqwest_client_hook {
+                    None => reqwest::ClientBuilder::new(),
+                    Some(hook) => hook(reqwest::ClientBuilder::new())?
+                };
 
                 if let Some(danger_config) = danger {
                     #[cfg(not(feature = "dangerous-settings"))]
@@ -268,6 +271,7 @@ pub async fn fetch<R: Runtime>(
                 {
                     builder = builder.cookie_provider(state.cookies_jar.clone());
                 }
+
 
                 let mut request = builder.build()?.request(method.clone(), url);
 
